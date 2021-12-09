@@ -19,7 +19,8 @@
 
 namespace facebook {
 namespace cachelib_examples {
-using Cache = cachelib::LruAllocator; // or Lru2QAllocator, or TinyLFUAllocator
+using Cache = cachelib::TinyLFUAllocator; // LruAllocator, Lru2QAllocator, or
+                                          // TinyLFUAllocator
 using CacheConfig = typename Cache::Config;
 using CacheKey = typename Cache::Key;
 using CacheItemHandle = typename Cache::ItemHandle;
@@ -46,7 +47,7 @@ void destroyCache() { gCache_.reset(); }
 
 CacheItemHandle get(CacheKey key) { return gCache_->find(key); }
 
-bool put(CacheKey key, const std::string& value) {
+bool put(CacheKey key, const std::string &value) {
   auto handle = gCache_->allocate(defaultPool_, key, value.size());
   if (!handle) {
     return false; // cache may fail to evict due to too many pending writes
@@ -60,7 +61,7 @@ bool put(CacheKey key, const std::string& value) {
 
 using namespace facebook::cachelib_examples;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   folly::init(&argc, &argv);
 
   initializeCache();
@@ -72,7 +73,7 @@ int main(int argc, char** argv) {
     assert(res);
 
     auto item = get("key");
-    folly::StringPiece sp{reinterpret_cast<const char*>(item->getMemory()),
+    folly::StringPiece sp{reinterpret_cast<const char *>(item->getMemory()),
                           item->getSize()};
     std::ignore = sp;
     assert(sp == "value");

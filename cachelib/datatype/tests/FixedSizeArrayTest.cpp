@@ -282,15 +282,15 @@ class FixedSizeArrayTest : public ::testing::Test {
   }
 };
 
-TYPED_TEST_CASE(FixedSizeArrayTest, AllocatorTypes);
-TYPED_TEST(FixedSizeArrayTest, Basic) { this->testBasic(); }
-TYPED_TEST(FixedSizeArrayTest, Equality) { this->testEquality(); }
-TYPED_TEST(FixedSizeArrayTest, Iterator) { this->testIterator(); }
-TYPED_TEST(FixedSizeArrayTest, StdContainers) { this->testStdContainers(); }
-TYPED_TEST(FixedSizeArrayTest, StdAlgorithms) { this->testStdAlgorithms(); }
-TYPED_TEST(FixedSizeArrayTest, testFollyContainers) {
-  this->testFollyContainers();
-}
+// TYPED_TEST_CASE(FixedSizeArrayTest, AllocatorTypes);
+// TYPED_TEST(FixedSizeArrayTest, Basic) { this->testBasic(); }
+// TYPED_TEST(FixedSizeArrayTest, Equality) { this->testEquality(); }
+// TYPED_TEST(FixedSizeArrayTest, Iterator) { this->testIterator(); }
+// TYPED_TEST(FixedSizeArrayTest, StdContainers) { this->testStdContainers(); }
+// TYPED_TEST(FixedSizeArrayTest, StdAlgorithms) { this->testStdAlgorithms(); }
+// TYPED_TEST(FixedSizeArrayTest, testFollyContainers) {
+//   this->testFollyContainers();
+// }
 } // namespace tests
 } // namespace cachelib
 } // namespace facebook

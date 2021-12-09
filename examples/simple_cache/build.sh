@@ -36,5 +36,5 @@ export LD_LIBRARY_PATH
 
 mkdir -p build
 cd build
-cmake $CMAKE_PARAMS ..
+cmake $CMAKE_PARAMS -DCMAKE_BUILD_TYPE=Debug ..
 make

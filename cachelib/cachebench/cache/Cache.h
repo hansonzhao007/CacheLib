@@ -392,6 +392,32 @@ inline typename Lru2QAllocator::MMConfig makeMMConfig(
                                   config.lru2qColdPct);
 }
 
+// TinyLFU
+template <>
+inline typename TinyLFUAllocator::MMConfig makeMMConfig(
+    CacheConfig const& config) {
+  return TinyLFUAllocator::MMConfig(config.lruRefreshSec,
+                                    config.lruRefreshRatio,
+                                    config.lruUpdateOnWrite,
+                                    config.lruUpdateOnRead,
+                                    config.tryLockUpdate,
+                                    config.windowToCacheSizeRatio,
+                                    config.tinySizePct);
+}
+
+// Lirs
+template <>
+inline typename LirsAllocator::MMConfig makeMMConfig(
+    CacheConfig const& config) {
+  return LirsAllocator::MMConfig(config.lruRefreshSec,
+                                 config.lruRefreshRatio,
+                                 config.lruUpdateOnWrite,
+                                 config.lruUpdateOnRead,
+                                 config.tryLockUpdate,
+                                 config.windowToCacheSizeRatio,
+                                 config.tinySizePct);
+}
+
 } // namespace cachebench
 } // namespace cachelib
 } // namespace facebook

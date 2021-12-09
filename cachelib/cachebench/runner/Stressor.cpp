@@ -22,6 +22,7 @@
 #include "cachelib/cachebench/runner/IntegrationStressor.h"
 #include "cachelib/cachebench/workload/OnlineGenerator.h"
 #include "cachelib/cachebench/workload/PieceWiseReplayGenerator.h"
+#include "cachelib/cachebench/workload/ReplayBinGenerator.h"
 #include "cachelib/cachebench/workload/ReplayGenerator.h"
 #include "cachelib/cachebench/workload/WorkloadGenerator.h"
 #include "cachelib/common/Utils.h"
@@ -131,6 +132,8 @@ std::unique_ptr<GeneratorBase> makeGenerator(const StressorConfig& config) {
     return std::make_unique<PieceWiseReplayGenerator>(config);
   } else if (config.generator == "replay") {
     return std::make_unique<ReplayGenerator>(config);
+  } else if (config.generator == "bin-replay") {
+    return std::make_unique<ReplayBinGenerator>(config);
   } else if (config.generator.empty() || config.generator == "workload") {
     // TODO: Remove the empty() check once we label workload-based configs
     // properly
@@ -166,6 +169,12 @@ std::unique_ptr<Stressor> Stressor::makeStressor(
           cacheConfig, stressorConfig, std::move(generator));
     } else if (cacheConfig.allocator == "LRU2Q") {
       return std::make_unique<CacheStressor<Lru2QAllocator>>(
+          cacheConfig, stressorConfig, std::move(generator));
+    } else if (cacheConfig.allocator == "TinyLFU") {
+      return std::make_unique<CacheStressor<TinyLFUAllocator>>(
+          cacheConfig, stressorConfig, std::move(generator));
+    } else if (cacheConfig.allocator == "Lirs") {
+      return std::make_unique<CacheStressor<LirsAllocator>>(
           cacheConfig, stressorConfig, std::move(generator));
     }
   }

@@ -261,7 +261,7 @@ Cache<Allocator>::Cache(const CacheConfig& config,
     const PoolId pid = cache_->addPool(
         folly::sformat("pool_{}", i), poolSize, {} /* allocSizes */, mmConfig,
         nullptr /* rebalanceStrategy */, nullptr /* resizeStrategy */,
-        true /* ensureSufficientMem */);
+        false /* ensureSufficientMem */);
     pools_.push_back(pid);
   }
 

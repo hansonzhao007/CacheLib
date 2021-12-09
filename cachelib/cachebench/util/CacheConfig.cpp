@@ -43,6 +43,10 @@ CacheConfig::CacheConfig(const folly::dynamic& configJson) {
   JSONSetVal(configJson, tryLockUpdate);
   JSONSetVal(configJson, lruIpSpec);
 
+  // for TinyLFU, Lirs
+  JSONSetVal(configJson, windowToCacheSizeRatio);
+  JSONSetVal(configJson, tinySizePct);
+
   JSONSetVal(configJson, lru2qHotPct);
   JSONSetVal(configJson, lru2qColdPct);
 
@@ -96,7 +100,7 @@ CacheConfig::CacheConfig(const folly::dynamic& configJson) {
   // if you added new fields to the configuration, update the JSONSetVal
   // to make them available for the json configs and increment the size
   // below
-  checkCorrectSize<CacheConfig, 688>();
+  checkCorrectSize<CacheConfig, 704>();
 
   if (numPools != poolSizes.size()) {
     throw std::invalid_argument(folly::sformat(

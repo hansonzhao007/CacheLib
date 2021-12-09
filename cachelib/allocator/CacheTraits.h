@@ -17,6 +17,7 @@
 #pragma once
 #include "cachelib/allocator/ChainedHashTable.h"
 #include "cachelib/allocator/MM2Q.h"
+#include "cachelib/allocator/MMLirs.h"
 #include "cachelib/allocator/MMLru.h"
 #include "cachelib/allocator/MMTinyLFU.h"
 #include "cachelib/common/Mutex.h"
@@ -55,5 +56,10 @@ struct TinyLFUCacheTrait {
   using AccessTypeLocks = SharedMutexBuckets;
 };
 
+struct LirsCacheTrait {
+  using MMType = MMLirs;
+  using AccessType = ChainedHashTable;
+  using AccessTypeLocks = SharedMutexBuckets;
+};
 } // namespace cachelib
 } // namespace facebook

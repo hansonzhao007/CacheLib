@@ -39,11 +39,16 @@ class CacheMonitorFactory {
   virtual ~CacheMonitorFactory() = default;
   virtual std::unique_ptr<CacheMonitor> create(LruAllocator& cache) = 0;
   virtual std::unique_ptr<CacheMonitor> create(Lru2QAllocator& cache) = 0;
+  virtual std::unique_ptr<CacheMonitor> create(TinyLFUAllocator& cache) = 0;
+  virtual std::unique_ptr<CacheMonitor> create(LirsAllocator& cache) = 0;
 };
 
 struct CacheConfig : public JSONConfig {
   // by defaullt, lru allocator. can be set to LRU-2Q.
   std::string allocator{"LRU"};
+
+  size_t windowToCacheSizeRatio{32};
+  size_t tinySizePct{2};
 
   uint64_t cacheSizeMB{0};
   uint64_t poolRebalanceIntervalSec{0};
