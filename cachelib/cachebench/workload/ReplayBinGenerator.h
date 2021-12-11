@@ -30,7 +30,7 @@ class ReplayBinGenerator : public ReplayBinGeneratorBase {
  public:
   explicit ReplayBinGenerator(const StressorConfig& config)
       : ReplayBinGeneratorBase(config),
-        sizes_(1, 4096),
+        sizes_(1, 1024),
         req_(key_, sizes_.begin(), sizes_.end(), OpType::kGet) {}
 
   virtual ~ReplayBinGenerator() {}
