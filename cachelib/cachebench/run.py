@@ -1,4 +1,10 @@
 #/usr/bin/python3
+
+# This script reads the trace files in binary format and replays them using four different 
+# replacement algorithms. Please copy this file along with `config.json` to path:
+# build-cachelib/cachebench, then change `trace_path` to the folder that contains 
+# the trace files and run `python3 run.py`.
+
 import json
 import os
 import re
@@ -17,6 +23,9 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 plt.rcParams['axes.linewidth'] = 2
 
 algorithms = ['LRU', 'LRU2Q', 'TinyLFU', 'Lirs']
+
+# modify it to your path
+trace_path = "/home/hanson/trace-u32-le/"
 
 markers= {
     'LRU'     : 'x',     
@@ -94,7 +103,7 @@ def Run(args):
         'enableLookaside': True,
         'numOps': 400000000,
         "numThreads" : 1,
-        "traceFileName" : "/home/hanson/trace-u32-le/" + trace,
+        "traceFileName" : trace_path + trace,
         "generator" : "bin-replay"
     }
     config = "data/" + trace + algo + str(cache_size)
