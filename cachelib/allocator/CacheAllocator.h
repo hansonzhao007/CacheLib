@@ -193,16 +193,18 @@ class CacheAllocator : public CacheBase {
   struct DestructorData {
     DestructorData(DestructorContext ctx,
                    Item& it,
-                   folly::Range<ChainedItemIter> iter)
-        : context(ctx), item(it), chainedAllocs(iter) {}
+                   folly::Range<ChainedItemIter> iter,
+                   PoolId id)
+        : context(ctx), item(it), chainedAllocs(iter), pool(id) {}
 
     // helps to convert RemoveContext to DestructorContext,
     // the context for RemoveCB is re-used to create DestructorData,
     // this can be removed if RemoveCB is dropped.
     DestructorData(RemoveContext ctx,
                    Item& it,
-                   folly::Range<ChainedItemIter> iter)
-        : item(it), chainedAllocs(iter) {
+                   folly::Range<ChainedItemIter> iter,
+                   PoolId id)
+        : item(it), chainedAllocs(iter), pool(id) {
       if (ctx == RemoveContext::kEviction) {
         context = DestructorContext::kEvictedFromRAM;
       } else {
@@ -227,6 +229,9 @@ class CacheAllocator : public CacheBase {
     // heap, functions (e.g. CacheAllocator::getAllocInfo) that assumes items
     // are located in cache slab doesn't work in such case.
     folly::Range<ChainedItemIter> chainedAllocs;
+
+    // the pool that this item is/was
+    PoolId pool;
   };
 
   // call back to execute when moving an item, this could be a simple memcpy
@@ -444,13 +449,21 @@ class CacheAllocator : public CacheBase {
 
   // look up an item by its key across the nvm cache as well if enabled.
   //
+  // @param key       the key for lookup
+  //
+  // @return          the read handle for the item or a handle to nullptr if the
+  //                  key does not exist.
+  ReadHandle find(Key key);
+
+  // look up an item by its key across the nvm cache as well if enabled.
+  //
   // @param key         the key for lookup
-  // @param mode        the mode of access for the lookup. defaults to
-  //                    AccessMode::kRead
+  // @param mode        the mode of access for the lookup.
+  //                    AccessMode::kRead or AccessMode::kWrite
   //
   // @return      the handle for the item or a handle to nullptr if the key does
   //              not exist.
-  ItemHandle find(Key key, AccessMode mode = AccessMode::kRead);
+  ItemHandle find(Key key, AccessMode mode);
 
   // look up an item by its key across the nvm cache as well if enabled. Users
   // should call this API only when they are going to mutate the item data.
@@ -1231,10 +1244,9 @@ class CacheAllocator : public CacheBase {
 
   // acquires the wait context for the handle. This is used by NvmCache to
   // maintain a list of waiters
-  std::shared_ptr<WaitContext<ItemHandle>> getWaitContext(
+  std::shared_ptr<WaitContext<ReadHandle>> getWaitContext(
       ItemHandle& hdl) const {
-    return std::reinterpret_pointer_cast<WaitContext<ItemHandle>>(
-        hdl.getItemWaitContext());
+    return hdl.getItemWaitContext();
   }
 
   using MMContainerPtr = std::unique_ptr<MMContainer>;

@@ -249,7 +249,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     // grab a handle for the current allocation, remove the allocation and you
     // should be able to allocate a new one while still holding a handle to the
     // previously allocated one.
-    auto handle = alloc.find(key);
+    auto handle = alloc.findToWrite(key);
     ASSERT_NE(handle, nullptr);
     const char magicVal1 = 'f';
     memset(handle->getMemory(), magicVal1, handle->getSize());
@@ -713,9 +713,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     }
 
     {
-      // TODO: change "ReadHandle" to "auto" when find() API starts to return a
-      // "read handle"
-      ReadHandle handle = alloc.find("key");
+      auto handle = alloc.find("key");
       ASSERT_NE(handle, nullptr);
       ASSERT_TRUE(isConst(handle->getMemory()));
       ASSERT_EQ(handle.isWriteHandle(), false);
@@ -924,6 +922,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
   void testItemDestructor() {
     std::vector<std::string> evictedKeys;
     std::vector<std::string> removedKeys;
+    PoolId poolId;
     auto itemDestructor = [&](const typename AllocatorT::DestructorData& data) {
       const auto key = data.item.getKey();
       if (data.context == DestructorContext::kEvictedFromRAM) {
@@ -932,14 +931,16 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
         // kRemovedFromRAM case, no NVM in this test
         removedKeys.push_back({key.data(), key.size()});
       }
+      ASSERT_EQ(poolId, data.pool);
     };
     typename AllocatorT::Config config;
     config.setItemDestructor(itemDestructor);
     config.setCacheSize(100 * Slab::kSize);
 
     AllocatorT alloc(config);
-    const size_t numBytes = alloc.getCacheMemoryStats().cacheSize;
-    auto poolId = alloc.addPool("foobar", numBytes);
+    const size_t numBytes = alloc.getCacheMemoryStats().cacheSize / 2;
+    alloc.addPool("fake", numBytes);
+    poolId = alloc.addPool("foobar", numBytes);
 
     const unsigned int nSizes = 10;
     const unsigned int keyLen = 100;
@@ -2568,7 +2569,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
       ASSERT_TRUE(parent->hasChainedItem());
     }
 
-    auto originalParent = alloc.find("parent");
+    auto originalParent = alloc.findToWrite("parent");
 
     // parent of different size
     auto newParent = alloc.allocate(poolId, "parent", 1000);
@@ -2624,7 +2625,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
       keys.push_back(key);
     }
 
-    std::vector<typename AllocatorT::ItemHandle> handles;
+    std::vector<typename AllocatorT::ReadHandle> handles;
     // We should be able to view data through IOBuf
     for (const auto& key : keys) {
       for (unsigned int i = 0; i < 5; i++) {
@@ -2850,7 +2851,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
       keys.push_back(key);
     }
 
-    std::vector<typename AllocatorT::ItemHandle> handles;
+    std::vector<typename AllocatorT::ReadHandle> handles;
     // We should be able to view data through IOBuf
     for (const auto& key : keys) {
       for (unsigned int i = 0; i < 5; i++) {
@@ -3269,7 +3270,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     config.enableCachePersistence(this->cacheDir_);
     config.setCacheSize(size);
     {
-      std::vector<typename AllocatorT::ItemHandle> handles;
+      std::vector<typename AllocatorT::ReadHandle> handles;
       AllocatorT alloc(AllocatorT::SharedMemNew, config);
       const size_t numBytes = alloc.getCacheMemoryStats().cacheSize;
       const std::set<uint32_t> acSizes = {512 * 1024, 1024 * 1024};
@@ -4486,7 +4487,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     const auto pid = alloc.addPool("one", poolSize);
 
     auto addFn = [&] {
-      auto itemHandle = alloc.find("parent");
+      auto itemHandle = alloc.findToWrite("parent");
       for (unsigned int j = 0; j < 100000; ++j) {
         auto childItem = alloc.allocateChainedItem(itemHandle, 100);
         ASSERT_NE(nullptr, childItem);
@@ -4496,7 +4497,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     };
 
     auto popFn = [&] {
-      auto itemHandle = alloc.find("parent");
+      auto itemHandle = alloc.findToWrite("parent");
       for (unsigned int j = 0; j < 100000; ++j) {
         alloc.popChainedItem(itemHandle);
       }
@@ -4842,7 +4843,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
         for (unsigned int i = 0; i < 1000; ++i) {
           const auto key = keyPrefix + folly::to<std::string>(loop) + "_" +
                            folly::to<std::string>(i);
-          auto parent = alloc.find(key);
+          auto parent = alloc.findToWrite(key);
           uint64_t numChildren = 0;
           while (parent->hasChainedItem()) {
             auto child = alloc.popChainedItem(parent);
@@ -5056,7 +5057,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
         for (unsigned int i = 0; i < 1000; ++i) {
           const auto key = keyPrefix + folly::to<std::string>(loop) + "_" +
                            folly::to<std::string>(i);
-          auto parent = alloc.find(key);
+          auto parent = alloc.findToWrite(key);
           uint64_t numChildren = 0;
           while (parent->hasChainedItem()) {
             auto child = alloc.popChainedItem(parent);
@@ -5177,7 +5178,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     // we know moving sync is held now.
     {
       auto newParent = alloc.allocate(pid, movingKey, 600);
-      auto parent = alloc.find(movingKey);
+      auto parent = alloc.findToWrite(movingKey);
       alloc.transferChainAndReplace(parent, newParent);
     }
 
@@ -5302,7 +5303,7 @@ class BaseAllocatorTest : public AllocatorTest<AllocatorT> {
     // Thread to allocate chained child items
     int childCount = 17;
     auto addChild = [&] {
-      auto itemHandle = alloc.find("parent");
+      auto itemHandle = alloc.findToWrite("parent");
       for (int j = 0; j < childCount; j++) {
         auto childItem = alloc.allocateChainedItem(itemHandle, itemSize);
         ASSERT_NE(nullptr, childItem);
